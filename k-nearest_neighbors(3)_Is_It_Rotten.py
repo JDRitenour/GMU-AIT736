@@ -1,7 +1,6 @@
 # references
-# https://scikit-learn.org/stable/modules/naive_bayes.html
-# https://www.tutorialspoint.com/how-to-build-naive-bayes-classifiers-using-python-scikit-learn
-
+# https://www.tutorialspoint.com/scikit_learn/scikit_learn_kneighbors_classifier.htm
+# https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
 # libraries imports
 # from datetime import date
 import time
@@ -13,7 +12,7 @@ import tracemalloc
 from datetime import datetime
 from PIL import Image
 from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from openpyxl import Workbook
 
@@ -30,7 +29,9 @@ total_run_time = None
 total_train_time = None
 total_test_time = None
 
-model_name = 'Naive Bayes'
+neighbors = 3
+#model_name = 'k-nearest neighbors'
+model_name = 'k-nearest neighbors('+str(neighbors)+')'
 log_file = model_name+"ML_.csv"
 # dataset_train = r"D:\AIT 736\Group Project\archive\dataset\Train"
 # dataset_test = r"D:\AIT 736\Group Project\archive\dataset\Test"
@@ -39,11 +40,11 @@ dataset_test_pct = 0.2
 dataset_random_state = 42
 wb = openpyxl.load_workbook(r"D:\AIT 736\Group Project\Is_It_Rotten\IsItRotten.xlsx")
 ws = wb[r"Run Result Data"]
-ws['B3'] = model_name
+ws['B4'] = model_name
 
 # start logging
 #f = open(log_file, "a")
-#f.write('Start time ≈ '+start_time.strftime("%m/%d/%Y, %H:%M:%S"))
+#f.write(start_time)
 #f.close()
 #Start logging
 print("Running classifier: "+model_name)
@@ -56,7 +57,7 @@ if dataset == r"D:\AIT 736\Group Project\archive\dataset2":
 # Create a color histogram which represents the distribution of the composition of colors in the image
 # Function creates histogram for image
 def get_color_histogram(image_path, rgb_bins=(8, 8, 8)):
-    # initialize histogram b
+    # initialize histogram
     histogram = []
     # open image
     image = Image.open(image_path)
@@ -69,7 +70,8 @@ def get_color_histogram(image_path, rgb_bins=(8, 8, 8)):
     for color_channel in range(3):  # looping through the color channels (R, G, B)
         channel_hist, _ = np.histogram(image_array[:, :, color_channel], bins=rgb_bins[color_channel], range=(0, 512))
         histogram.extend(channel_hist)
-    #print('histogram: ',histogram)
+    # print('histogram: ',histogram)
+    # print('histogram', histogram)
     return histogram
 
 # Function creates lists of histograms and labels for images
@@ -121,59 +123,54 @@ print('Splitting and randomizing complete')
 # X_train, y_train = np.array(X_train), np.array(y_train)
 # X_test, y_test = np.array(X_test), np.array(y_test)
 
-# Naive Bayes classifier training
+# k-nearest neighbors classifier training
 print('training with '+model_name)
 tracemalloc.start()
 train_start_time = datetime.now()
-Naive_Bayes_classifier = GaussianNB()
-Naive_Bayes_classifier.fit(X_train, y_train)
+k_nearest_neighbors = KNeighborsClassifier(n_neighbors=neighbors)
+k_nearest_neighbors.fit(X_train, y_train)
 train_complete_time = datetime.now()
 train_memory = tracemalloc.get_traced_memory()
 tracemalloc.stop()
 total_train_time = train_complete_time - train_start_time
-ws['C3'] = train_start_time
-ws['D3'] = train_complete_time
-ws['E3'] = total_train_time
+ws['C4'] = train_start_time
+ws['D4'] = train_complete_time
+ws['E4'] = total_train_time
 print('training complete')
 print('train time', total_train_time)
-ws['I3'] = train_memory[0]
-ws['J3'] = train_memory[1]
+ws['I4'] = train_memory[0]
+ws['J4'] = train_memory[1]
 # print('train memory', train_memory)
 # print('train memory', train_memory[0])
 # print('train memory', train_memory[1])
 
-# Naive Bayes classifier testing
+# k-nearest neighbors classifier testing
 print('testing '+model_name)
 tracemalloc.start()
 test_start_time = datetime.now()
-y_predict = Naive_Bayes_classifier.predict(X_test)
+y_predict = k_nearest_neighbors.predict(X_test)
 test_complete_time = datetime.now()
 test_memory = tracemalloc.get_traced_memory()
 tracemalloc.stop()
 total_test_time = test_complete_time - test_start_time
 print('testing complete')
-ws['F3'] = train_start_time
-ws['G3'] = train_complete_time
-ws['H3'] = total_train_time
-ws['L3'] = test_memory[0]
-ws['M3'] = test_memory[1]
+ws['F4'] = test_start_time
+ws['G4'] = test_complete_time
+ws['H4'] = total_test_time
+ws['L4'] = test_memory[0]
+ws['M4'] = test_memory[1]
 
 # ML Model Eval
 accuracy = accuracy_score(y_test, y_predict)
 conf_matrix = confusion_matrix(y_test, y_predict)
 classification_rep = classification_report(y_test, y_predict)
-ws['O3'] = accuracy
+ws['O5'] = accuracy
 
 #print(f"Accuracy: {accuracy:.2f}")
 #print("Confusion Matrix:")
 #print(conf_matrix)
 #print("Classification Report:")
 #print(classification_rep)
-
-#  calculate runtime
-complete_time = datetime.now()
-total_run_time = complete_time - start_time
-print(model_name+' completed at: ', total_run_time)
 
 wb.save(r"D:\AIT 736\Group Project\Is_It_Rotten\IsItRotten.xlsx")
 quit()
